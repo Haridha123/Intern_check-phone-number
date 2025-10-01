@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>WhatsApp Number Checker</title>
+    <link rel='stylesheet' href='{{ url_for('static', filename='style.css') }}'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css' rel='stylesheet'>
+</head>
+<body>
+    <div class='container'>
+        <header class='header'>
+            <div class='logo'>
+                <i class='fab fa-whatsapp'></i>
+                <h1>WhatsApp Number Checker</h1>
+            </div>
+            <div class='session-status' id='sessionStatus'>
+                <i class='fas fa-circle-notch fa-spin'></i>
+                <span>Checking session...</span>
+            </div>
+        </header>
+
+        <div class='main-content'>
+            <div class='card'>
+                <h2><i class='fas fa-power-off'></i> Session Control</h2>
+                <div class='session-controls'>
+                    <button id='initBtn' class='btn-primary'>
+                        <i class='fas fa-play'></i> Initialize WhatsApp Session
+                    </button>
+                    <div id='sessionInfo' class='session-info' style='display: none;'>
+                        <i class='fas fa-check-circle'></i> Session Ready
+                    </div>
+                </div>
+            </div>
+
+            <div class='card'>
+                <h2><i class='fas fa-phone'></i> Check Single Number</h2>
+                <div class='input-group'>
+                    <input type='text' id='singleNumber' placeholder='+919876543210' class='form-input'>
+                    <button id='checkSingle' class='btn-success' disabled>
+                        <i class='fas fa-search'></i> Check Number
+                    </button>
+                </div>
+                <div id='singleResult' class='result-area'></div>
+            </div>
+
+            <div class='card'>
+                <h2><i class='fas fa-list'></i> Batch Check Multiple Numbers</h2>
+                <div class='input-group'>
+                    <textarea id='batchNumbers' placeholder='+919876543210
++919876543211
++919876543212' rows='5' class='form-textarea'></textarea>
+                    <button id='checkBatch' class='btn-warning' disabled>
+                        <i class='fas fa-play'></i> Start Batch Check
+                    </button>
+                </div>
+                
+                <div id='batchProgress' class='progress-section' style='display: none;'>
+                    <div class='progress-bar'>
+                        <div class='progress-fill' id='progressFill'></div>
+                    </div>
+                    <div class='progress-text'>
+                        <span id='progressText'>0 / 0</span>
+                    </div>
+                </div>
+                
+                <div id='batchResults' class='result-area'></div>
+            </div>
+        </div>
+
+        <footer class='footer'>
+            <p><i class='fas fa-info-circle'></i> Uses your saved WhatsApp session - no QR scanning needed after initial setup</p>
+        </footer>
+    </div>
+
+    <script src='{{ url_for('static', filename='script.js') }}'></script>
+</body>
+</html>
