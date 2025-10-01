@@ -1,3 +1,6 @@
+# Intern_check-phone-number
+For checking whether a number is register in whatsapp or not
+>>>>>>> a30d53f59c5e9cb80b97fbee5757bdb4bc032d0c
 # WhatsApp Number Checker 📱
 
 A comprehensive WhatsApp registration checker that can verify if phone numbers are registered on WhatsApp. Supports both single number checking and batch processing with persistent login capabilities.
@@ -25,8 +28,8 @@ A comprehensive WhatsApp registration checker that can verify if phone numbers a
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/whatsapp-number-checker.git
-   cd whatsapp-number-checker
+   git clone https://github.com/Haridha123/Intern_check-phone-number.git
+   cd Intern_check-phone-number
    ```
 
 2. **Install dependencies**
@@ -183,3 +186,7 @@ If you encounter issues:
 ---
 
 **⚡ Now you can check thousands of numbers without QR code interruptions!**
+=======
+# Intern_check-phone-number
+For checking whether a number is register in whatsapp or not
+>>>>>>> a30d53f59c5e9cb80b97fbee5757bdb4bc032d0c
