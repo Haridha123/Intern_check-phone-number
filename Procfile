@@ -1,0 +1,1 @@
+web: cd whatsapp_django && python manage.py migrate && python manage.py runserver 0.0.0.0:$PORT
