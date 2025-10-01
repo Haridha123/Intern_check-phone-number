@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: whatsapp-checker
+    runtime: python3
+    buildCommand: "./build.sh"
+    startCommand: "cd whatsapp_django && gunicorn whatsapp_django.wsgi:application"
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: RENDER
+        value: True

@@ -1,5 +1,4 @@
 version: '3.8'
-
 services:
   web:
     build: .
@@ -8,19 +7,6 @@ services:
     environment:
       - DEBUG=False
       - SECRET_KEY=your-secret-key-here
-      - CHROME_PROFILE_PATH=/tmp/chrome_profile
     volumes:
-      - chrome_data:/tmp/chrome_profile
-      - session_data:/tmp/whatsapp_sessions
+      - ./media:/app/media
     restart: unless-stopped
-
-  # Optional: Add Redis for session storage
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
-
-volumes:
-  chrome_data:
-  session_data:
