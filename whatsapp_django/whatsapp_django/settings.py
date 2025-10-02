@@ -21,23 +21,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-80yor-n0%#gp5!n+os(f%e(x)_44l$#3p04vcn49qaj&r9nb!f'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-80yor-n0%#gp5!n+os(f%e(x)_44l$#3p04vcn49qaj&r9nb!f')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com']
 
 # Render.com specific settings
 if 'RENDER' in os.environ:
-    ALLOWED_HOSTS.append('.onrender.com')
     DEBUG = False
-    # Render provides PORT environment variable
-    import dj_database_url
-    # Use environment database if available
-    DATABASES['default'] = dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-    )
 
 
 # Application definition

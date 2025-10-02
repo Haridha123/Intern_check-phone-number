@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -138,13 +138,13 @@
     <div class="container">
         <div class="header">
             <h1>WhatsApp Checker</h1>
-            <p>Django Backend - FAST Single & Batch Checking with File Upload</p>
+            <p>Check WhatsApp Registration - Single, Batch & File Upload</p>
         </div>
         
         <div class="tabs">
-            <button class="tab active" onclick="switchTab(''single'')">Single Number</button>
-            <button class="tab" onclick="switchTab(''batch'')">Batch Check</button>
-            <button class="tab" onclick="switchTab(''upload'')">File Upload</button>
+            <button class="tab active" onclick="switchTab('single')">Single Number</button>
+            <button class="tab" onclick="switchTab('batch')">Batch Check</button>
+            <button class="tab" onclick="switchTab('upload')">File Upload</button>
         </div>
 
         <!-- Single Number Tab -->
@@ -192,281 +192,280 @@
     </div>
 
     <script>
-        console.log(''WhatsApp Checker script starting...'');
+        console.log('WhatsApp Checker script starting...');
         
         let uploadedNumbers = [];
         
         // Tab switching functionality
         function switchTab(tabName) {
-            console.log(''Switching to tab:'', tabName);
+            console.log('Switching to tab:', tabName);
             
             // Hide all tab contents
-            document.querySelectorAll(''.tab-content'').forEach(content => {
-                content.classList.remove(''active'');
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
             });
             
             // Remove active class from all tabs
-            document.querySelectorAll(''.tab'').forEach(tab => {
-                tab.classList.remove(''active'');
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
             });
             
             // Show selected tab content
-            document.getElementById(tabName + ''-tab'').classList.add(''active'');
+            document.getElementById(tabName + '-tab').classList.add('active');
             
             // Add active class to clicked tab
-            event.target.classList.add(''active'');
+            event.target.classList.add('active');
         }
 
         // Wait for DOM to load
-        document.addEventListener(''DOMContentLoaded'', function() {
-            console.log(''DOM loaded, setting up event listeners...'');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, setting up event listeners...');
             
             // File input change handler
-            const fileInput = document.getElementById(''file-input'');
+            const fileInput = document.getElementById('file-input');
             if (fileInput) {
-                fileInput.addEventListener(''change'', function() {
-                    console.log(''File input changed'');
+                fileInput.addEventListener('change', function() {
+                    console.log('File input changed');
                     handleFileUpload();
                 });
             }
             
             // Single number check button
-            const checkBtn = document.getElementById(''check-btn'');
+            const checkBtn = document.getElementById('check-btn');
             if (checkBtn) {
-                console.log(''Check button found, adding click handler'');
-                checkBtn.addEventListener(''click'', function() {
-                    console.log(''Check button clicked!'');
+                console.log('Check button found, adding click handler');
+                checkBtn.addEventListener('click', function() {
+                    console.log('Check button clicked!');
                     
-                    const phoneInput = document.getElementById(''phone-number'');
-                    const resultDiv = document.getElementById(''single-result'');
+                    const phoneInput = document.getElementById('phone-number');
                     const number = phoneInput.value.trim();
                     
                     if (!number) {
-                        showResult(''single-result'', ''Please enter a phone number'', ''error'');
+                        showResult('single-result', 'Please enter a phone number', 'error');
                         return;
                     }
                     
                     // Show loading state
-                    this.textContent = ''Checking...'';
+                    this.textContent = 'Checking...';
                     this.disabled = true;
                     
                     // Show checking message
-                    showResult(''single-result'', '' Checking '' + number + ''... Please wait'', ''loading'');
+                    showResult('single-result', '🔄 Checking ' + number + '... Please wait', 'loading');
                     
                     // Make API request
-                    fetch(''/api/check-single/'', {
-                        method: ''POST'',
+                    fetch('/api/check-single/', {
+                        method: 'POST',
                         headers: {
-                            ''Content-Type'': ''application/json'',
+                            'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({ number: number })
                     })
                     .then(response => {
-                        console.log(''Response status:'', response.status);
+                        console.log('Response status:', response.status);
                         return response.json();
                     })
                     .then(data => {
-                        console.log(''API response:'', data);
+                        console.log('API response:', data);
                         
                         if (data.registered !== undefined) {
-                            const emoji = data.registered ? '''' : '''';
-                            const status = data.registered ? ''REGISTERED'' : ''NOT REGISTERED'';
-                            const statusClass = data.registered ? ''success'' : ''error'';
+                            const emoji = data.registered ? '✅' : '❌';
+                            const status = data.registered ? 'REGISTERED' : 'NOT REGISTERED';
+                            const statusClass = data.registered ? 'success' : 'error';
                             
-                            showResult(''single-result'', emoji + '' '' + data.number + '' is '' + status + '' on WhatsApp'', statusClass);
+                            showResult('single-result', emoji + ' ' + data.number + ' is ' + status + ' on WhatsApp', statusClass);
                         } else if (data.error) {
-                            showResult(''single-result'', '' Error: '' + data.error, ''error'');
+                            showResult('single-result', '❌ Error: ' + data.error, 'error');
                         } else {
-                            showResult(''single-result'', '' Unexpected response format'', ''error'');
+                            showResult('single-result', '❌ Unexpected response format', 'error');
                         }
                     })
                     .catch(error => {
-                        console.error(''Request failed:'', error);
-                        showResult(''single-result'', '' Request failed: '' + error.message, ''error'');
+                        console.error('Request failed:', error);
+                        showResult('single-result', '❌ Request failed: ' + error.message, 'error');
                     })
                     .finally(() => {
                         // Reset button
-                        this.textContent = ''CHECK REGISTRATION'';
+                        this.textContent = 'CHECK REGISTRATION';
                         this.disabled = false;
                     });
                 });
             } else {
-                console.error(''Check button not found!'');
+                console.error('Check button not found!');
             }
             
             // Batch check button
-            const batchBtn = document.getElementById(''batch-btn'');
+            const batchBtn = document.getElementById('batch-btn');
             if (batchBtn) {
-                console.log(''Batch button found, adding click handler'');
-                batchBtn.addEventListener(''click'', function() {
-                    console.log(''Batch button clicked!'');
+                console.log('Batch button found, adding click handler');
+                batchBtn.addEventListener('click', function() {
+                    console.log('Batch button clicked!');
                     
-                    const textArea = document.getElementById(''batch-numbers'');
+                    const textArea = document.getElementById('batch-numbers');
                     const numbersText = textArea.value.trim();
                     
                     if (!numbersText) {
-                        showResult(''batch-result'', '' Please enter phone numbers'', ''error'');
+                        showResult('batch-result', '❌ Please enter phone numbers', 'error');
                         return;
                     }
                     
-                    const numbers = numbersText.split(''\n'')
+                    const numbers = numbersText.split('\n')
                         .map(line => line.trim())
                         .filter(line => line.length > 0);
                     
                     if (numbers.length === 0) {
-                        showResult(''batch-result'', '' No valid numbers found'', ''error'');
+                        showResult('batch-result', '❌ No valid numbers found', 'error');
                         return;
                     }
                     
                     // Show loading state
-                    this.textContent = ''Processing '' + numbers.length + '' numbers...'';
+                    this.textContent = 'Processing ' + numbers.length + ' numbers...';
                     this.disabled = true;
                     
-                    showResult(''batch-result'', '' Processing '' + numbers.length + '' numbers... This will take several minutes.'', ''loading'');
+                    showResult('batch-result', '🔄 Processing ' + numbers.length + ' numbers... This will take several minutes.', 'loading');
                     
                     // Make API request
-                    fetch(''/api/check-batch/'', {
-                        method: ''POST'',
+                    fetch('/api/check-batch/', {
+                        method: 'POST',
                         headers: {
-                            ''Content-Type'': ''application/json'',
+                            'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({ numbers: numbers })
                     })
                     .then(response => response.json())
                     .then(data => {
-                        console.log(''Batch API response:'', data);
-                        showResult(''batch-result'', '' Batch processing started! Results will appear as they complete. Check back in a few minutes.'', ''success'');
+                        console.log('Batch API response:', data);
+                        showResult('batch-result', '✅ Batch processing started! Results will appear as they complete. Check back in a few minutes.', 'success');
                     })
                     .catch(error => {
-                        console.error(''Batch request failed:'', error);
-                        showResult(''batch-result'', '' Batch request failed: '' + error.message, ''error'');
+                        console.error('Batch request failed:', error);
+                        showResult('batch-result', '❌ Batch request failed: ' + error.message, 'error');
                     })
                     .finally(() => {
                         // Reset button
-                        this.textContent = ''CHECK ALL NUMBERS'';
+                        this.textContent = 'CHECK ALL NUMBERS';
                         this.disabled = false;
                     });
                 });
             }
             
             // File upload check button
-            const uploadBtn = document.getElementById(''upload-check-btn'');
+            const uploadBtn = document.getElementById('upload-check-btn');
             if (uploadBtn) {
-                console.log(''Upload button found, adding click handler'');
-                uploadBtn.addEventListener(''click'', function() {
-                    console.log(''Upload button clicked!'');
+                console.log('Upload button found, adding click handler');
+                uploadBtn.addEventListener('click', function() {
+                    console.log('Upload button clicked!');
                     
                     if (uploadedNumbers.length === 0) {
-                        showResult(''upload-result'', '' Please upload a file first'', ''error'');
+                        showResult('upload-result', '❌ Please upload a file first', 'error');
                         return;
                     }
                     
                     // Show loading state
-                    this.textContent = ''Processing '' + uploadedNumbers.length + '' numbers...'';
+                    this.textContent = 'Processing ' + uploadedNumbers.length + ' numbers...';
                     this.disabled = true;
                     
-                    showResult(''upload-result'', '' Processing '' + uploadedNumbers.length + '' numbers from file... This will take several minutes.'', ''loading'');
+                    showResult('upload-result', '🔄 Processing ' + uploadedNumbers.length + ' numbers from file... This will take several minutes.', 'loading');
                     
                     // Make API request
-                    fetch(''/api/check-batch/'', {
-                        method: ''POST'',
+                    fetch('/api/check-batch/', {
+                        method: 'POST',
                         headers: {
-                            ''Content-Type'': ''application/json'',
+                            'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({ numbers: uploadedNumbers })
                     })
                     .then(response => response.json())
                     .then(data => {
-                        console.log(''Upload batch API response:'', data);
-                        showResult(''upload-result'', '' File processing started! Results will appear as they complete. Check back in a few minutes.'', ''success'');
+                        console.log('Upload batch API response:', data);
+                        showResult('upload-result', '✅ File processing started! Results will appear as they complete. Check back in a few minutes.', 'success');
                     })
                     .catch(error => {
-                        console.error(''Upload batch request failed:'', error);
-                        showResult(''upload-result'', '' File processing failed: '' + error.message, ''error'');
+                        console.error('Upload batch request failed:', error);
+                        showResult('upload-result', '❌ File processing failed: ' + error.message, 'error');
                     })
                     .finally(() => {
                         // Reset button
-                        this.textContent = ''CHECK UPLOADED NUMBERS'';
+                        this.textContent = 'CHECK UPLOADED NUMBERS';
                         this.disabled = false;
                     });
                 });
             }
             
-            console.log(''All event listeners set up successfully!'');
+            console.log('All event listeners set up successfully!');
         });
 
         // Handle file upload
         function handleFileUpload() {
-            console.log(''handleFileUpload called'');
+            console.log('handleFileUpload called');
             
-            const fileInput = document.getElementById(''file-input'');
-            const fileInfo = document.getElementById(''file-info'');
-            const uploadCheckBtn = document.getElementById(''upload-check-btn'');
+            const fileInput = document.getElementById('file-input');
+            const fileInfo = document.getElementById('file-info');
+            const uploadCheckBtn = document.getElementById('upload-check-btn');
             
             if (!fileInput.files || fileInput.files.length === 0) {
-                console.log(''No file selected'');
-                fileInfo.innerHTML = '''';
-                fileInfo.classList.remove(''show'');
+                console.log('No file selected');
+                fileInfo.innerHTML = '';
+                fileInfo.classList.remove('show');
                 uploadCheckBtn.disabled = true;
-                uploadCheckBtn.textContent = ''CHECK UPLOADED NUMBERS'';
+                uploadCheckBtn.textContent = 'CHECK UPLOADED NUMBERS';
                 uploadedNumbers = [];
                 return;
             }
             
             const file = fileInput.files[0];
-            console.log(''File selected:'', file.name, file.size, file.type);
+            console.log('File selected:', file.name, file.size, file.type);
             
             // Show file info loading
-            fileInfo.innerHTML = ''<div style="color: #007bff;"> Uploading '' + file.name + ''... Please wait</div>'';
-            fileInfo.classList.add(''show'');
+            fileInfo.innerHTML = '<div style="color: #007bff;">📤 Uploading ' + file.name + '... Please wait</div>';
+            fileInfo.classList.add('show');
             
             // Create FormData
             const formData = new FormData();
-            formData.append(''file'', file);
+            formData.append('file', file);
             
             // Upload file
-            fetch(''/api/upload-file/'', {
-                method: ''POST'',
+            fetch('/api/upload-file/', {
+                method: 'POST',
                 body: formData
             })
             .then(response => {
-                console.log(''File upload response status:'', response.status);
+                console.log('File upload response status:', response.status);
                 return response.json();
             })
             .then(data => {
-                console.log(''File upload response:'', data);
+                console.log('File upload response:', data);
                 
                 if (data.numbers && data.numbers.length > 0) {
                     uploadedNumbers = data.numbers;
                     
-                    const preview = data.numbers.slice(0, 3).join('', '');
-                    const moreText = data.numbers.length > 3 ? ''... and '' + (data.numbers.length - 3) + '' more'' : '''';
+                    const preview = data.numbers.slice(0, 3).join(', ');
+                    const moreText = data.numbers.length > 3 ? '... and ' + (data.numbers.length - 3) + ' more' : '';
                     
                     fileInfo.innerHTML = 
-                        ''<div style="color: #28a745;"> File uploaded successfully!</div>'' +
-                        ''<div><strong>Found:</strong> '' + data.numbers.length + '' phone numbers</div>'' +
-                        ''<div><strong>Preview:</strong> '' + preview + moreText + ''</div>'';
+                        '<div style="color: #28a745;">✅ File uploaded successfully!</div>' +
+                        '<div><strong>Found:</strong> ' + data.numbers.length + ' phone numbers</div>' +
+                        '<div><strong>Preview:</strong> ' + preview + moreText + '</div>';
                     
                     uploadCheckBtn.disabled = false;
-                    uploadCheckBtn.textContent = ''CHECK '' + data.numbers.length + '' NUMBERS'';
+                    uploadCheckBtn.textContent = 'CHECK ' + data.numbers.length + ' NUMBERS';
                     
-                    console.log(''File processed successfully, found'', data.numbers.length, ''numbers'');
+                    console.log('File processed successfully, found', data.numbers.length, 'numbers');
                 } else {
                     uploadedNumbers = [];
-                    const errorMsg = data.error || ''No valid phone numbers found in the file'';
-                    fileInfo.innerHTML = ''<div style="color: #dc3545;"> '' + errorMsg + ''</div>'';
+                    const errorMsg = data.error || 'No valid phone numbers found in the file';
+                    fileInfo.innerHTML = '<div style="color: #dc3545;">❌ ' + errorMsg + '</div>';
                     uploadCheckBtn.disabled = true;
-                    uploadCheckBtn.textContent = ''CHECK UPLOADED NUMBERS'';
+                    uploadCheckBtn.textContent = 'CHECK UPLOADED NUMBERS';
                     
-                    console.log(''File processing failed:'', errorMsg);
+                    console.log('File processing failed:', errorMsg);
                 }
             })
             .catch(error => {
-                console.error(''File upload error:'', error);
+                console.error('File upload error:', error);
                 uploadedNumbers = [];
-                fileInfo.innerHTML = ''<div style="color: #dc3545;"> Upload failed: '' + error.message + ''</div>'';
+                fileInfo.innerHTML = '<div style="color: #dc3545;">❌ Upload failed: ' + error.message + '</div>';
                 uploadCheckBtn.disabled = true;
-                uploadCheckBtn.textContent = ''CHECK UPLOADED NUMBERS'';
+                uploadCheckBtn.textContent = 'CHECK UPLOADED NUMBERS';
             });
         }
         
@@ -474,14 +473,14 @@
         function showResult(elementId, message, type) {
             const resultDiv = document.getElementById(elementId);
             if (resultDiv) {
-                resultDiv.className = ''result '' + type;
+                resultDiv.className = 'result ' + type;
                 resultDiv.innerHTML = message;
-                resultDiv.style.display = ''block'';
-                console.log(''Showing result:'', message);
+                resultDiv.style.display = 'block';
+                console.log('Showing result:', message);
             }
         }
         
-        console.log(''WhatsApp Checker script loaded successfully!'');
+        console.log('WhatsApp Checker script loaded successfully!');
     </script>
 </body>
 </html>

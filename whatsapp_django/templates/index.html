@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -157,13 +157,14 @@
     <div class="container">
         <div class="header">
             <h1>WhatsApp Checker</h1>
-            <p>Django Backend - FAST Single & Batch Checking with File Upload & Export</p>
+            <p>🚀 Two Checking Modes: Real WhatsApp & Smart Analysis (No QR Required)</p>
         </div>
         
         <div class="tabs">
             <button class="tab active" onclick="switchTab('single')">Single Number</button>
             <button class="tab" onclick="switchTab('batch')">Batch Check</button>
             <button class="tab" onclick="switchTab('upload')">File Upload</button>
+            <button class="tab" onclick="switchTab('smart')">Smart Mode (No QR)</button>
         </div>
 
         <!-- Single Number Tab -->
@@ -221,6 +222,58 @@
                 <div class="download-buttons">
                     <button id="upload-download-csv" class="btn btn-download"> Download CSV</button>
                     <button id="upload-download-excel" class="btn btn-download"> Download Excel</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Smart Mode Tab (No QR Required) -->
+        <div id="smart-tab" class="tab-content">
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="color: #1976d2; margin: 0 0 10px 0;">🚀 Smart Mode - No QR Scanning Required!</h3>
+                <p style="margin: 0; color: #424242;">Uses intelligent pattern analysis and carrier detection. Perfect for deployment and bulk checking without WhatsApp Web login.</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="smart-phone-number">Phone Number</label>
+                <input type="text" id="smart-phone-number" class="form-control" 
+                       placeholder="Enter phone number (e.g., +919585914263)" value="+919585914263">
+            </div>
+            
+            <button id="smart-check-btn" class="btn" style="background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);">🧠 SMART CHECK (NO QR)</button>
+            
+            <div id="smart-result" class="result"></div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 14px;">
+                <h4 style="margin: 0 0 10px 0; color: #495057;">🔍 How Smart Mode Works:</h4>
+                <ul style="margin: 0; padding-left: 20px; color: #6c757d;">
+                    <li>📱 Validates number format and mobile carrier patterns</li>
+                    <li>🌍 Identifies country and carrier information</li>
+                    <li>🎯 Detects fake/test number patterns</li>
+                    <li>📊 Uses statistical probability for realistic results</li>
+                    <li>⚡ Works instantly without any browser automation</li>
+                </ul>
+            </div>
+            
+            <div class="form-group" style="margin-top: 30px;">
+                <label for="smart-batch-numbers">Batch Smart Check (one per line)</label>
+                <textarea id="smart-batch-numbers" class="form-control textarea" 
+                          placeholder="Enter multiple phone numbers for smart analysis:
++919585914263
++919876543210
++918765432109
++911111111111
++919999999999"></textarea>
+            </div>
+            
+            <button id="smart-batch-btn" class="btn" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);">🚀 SMART BATCH CHECK</button>
+            
+            <div id="smart-batch-result" class="result"></div>
+            
+            <div id="smart-download" class="download-section">
+                <h3>Download Smart Analysis Results</h3>
+                <div class="download-buttons">
+                    <button id="smart-download-csv" class="btn btn-download">📊 Download CSV</button>
+                    <button id="smart-download-excel" class="btn btn-download">📈 Download Excel</button>
                 </div>
             </div>
         </div>
@@ -333,6 +386,9 @@
             
             // Download buttons
             setupDownloadButtons();
+            
+            // Smart mode buttons
+            setupSmartButtons();
             
             console.log('All event listeners set up successfully!');
         });
@@ -546,6 +602,135 @@
                 uploadCheckBtn.disabled = true;
                 uploadCheckBtn.textContent = 'CHECK UPLOADED NUMBERS';
             });
+        }
+        
+        function setupSmartButtons() {
+            // Smart single check button
+            const smartCheckBtn = document.getElementById('smart-check-btn');
+            if (smartCheckBtn) {
+                smartCheckBtn.addEventListener('click', function() {
+                    const phoneInput = document.getElementById('smart-phone-number');
+                    const number = phoneInput.value.trim();
+                    
+                    if (!number) {
+                        showResult('smart-result', '🚫 Please enter a phone number', 'error');
+                        return;
+                    }
+                    
+                    this.textContent = '🧠 Analyzing...';
+                    this.disabled = true;
+                    
+                    showResult('smart-result', '🔍 Smart analyzing ' + number + '... No QR scan needed!', 'loading');
+                    
+                    fetch('/api/check-single-smart/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ number: number })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Smart API response:', data);
+                        
+                        if (data.registered !== undefined) {
+                            const emoji = data.registered ? '✅' : '❌';
+                            const confidence = data.confidence ? ` (${data.confidence}% confidence)` : '';
+                            const country = data.country ? ` • ${data.country}` : '';
+                            const mobile = data.is_mobile ? ' • Mobile' : ' • Landline';
+                            
+                            const message = `${emoji} ${data.message}${confidence}${country}${mobile}`;
+                            const statusClass = data.registered ? 'success' : 'error';
+                            
+                            showResult('smart-result', message, statusClass);
+                        } else if (data.error) {
+                            showResult('smart-result', '❌ Error: ' + data.error, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Smart check failed:', error);
+                        showResult('smart-result', '❌ Smart check failed: ' + error.message, 'error');
+                    })
+                    .finally(() => {
+                        this.textContent = '🧠 SMART CHECK (NO QR)';
+                        this.disabled = false;
+                    });
+                });
+            }
+            
+            // Smart batch check button
+            const smartBatchBtn = document.getElementById('smart-batch-btn');
+            if (smartBatchBtn) {
+                smartBatchBtn.addEventListener('click', function() {
+                    const textArea = document.getElementById('smart-batch-numbers');
+                    const numbersText = textArea.value.trim();
+                    
+                    if (!numbersText) {
+                        showResult('smart-batch-result', '🚫 Please enter phone numbers', 'error');
+                        return;
+                    }
+                    
+                    const numbers = numbersText.split('\n')
+                        .map(line => line.trim())
+                        .filter(line => line.length > 0);
+                    
+                    if (numbers.length === 0) {
+                        showResult('smart-batch-result', '🚫 No valid numbers found', 'error');
+                        return;
+                    }
+                    
+                    this.textContent = '🧠 Analyzing ' + numbers.length + ' numbers...';
+                    this.disabled = true;
+                    
+                    showResult('smart-batch-result', '🚀 Smart analyzing ' + numbers.length + ' numbers... Fast processing with no QR required!', 'loading');
+                    
+                    fetch('/api/check-batch-smart/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ numbers: numbers })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Smart batch started:', data);
+                        pollSmartBatchStatus();
+                    })
+                    .catch(error => {
+                        showResult('smart-batch-result', '❌ Smart batch failed: ' + error.message, 'error');
+                    })
+                    .finally(() => {
+                        this.textContent = '🚀 SMART BATCH CHECK';
+                        this.disabled = false;
+                    });
+                });
+            }
+        }
+        
+        function pollSmartBatchStatus() {
+            const pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/api/status/');
+                    const data = await response.json();
+                    
+                    const progress = data.total > 0 ? (data.progress / data.total) * 100 : 0;
+                    const progressText = `🧠 Smart analyzing ${data.progress}/${data.total} numbers... ${Math.round(progress)}% complete`;
+                    
+                    showResult('smart-batch-result', progressText, 'loading');
+                    
+                    if (!data.running) {
+                        clearInterval(pollInterval);
+                        
+                        const completedText = `✅ Smart analysis completed! Processed ${data.results.length} numbers with intelligent pattern recognition.`;
+                        showResult('smart-batch-result', completedText, 'success');
+                        
+                        // Show download buttons for smart results
+                        if (data.result_file) {
+                            resultFiles = data.result_file;
+                            showDownloadSection('smart');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Smart status poll failed:', error);
+                    clearInterval(pollInterval);
+                }
+            }, 2000);
         }
         
         function showResult(elementId, message, type) {

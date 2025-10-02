@@ -1,11 +1,13 @@
-﻿from django.urls import path
+﻿﻿from django.urls import path
 from . import views
 
 urlpatterns = [
     path('', views.index, name='home'),
     path('api/initialize/', views.session_status, name='initialize'),
     path('api/check-single/', views.check_single, name='check_single'),
+    path('api/check-single-smart/', views.check_single_smart, name='check_single_smart'),
     path('api/check-batch/', views.check_batch, name='check_batch'),
+    path('api/check-batch-smart/', views.check_batch_smart, name='check_batch_smart'),
     path('api/status/', views.get_status, name='status'),
     path('api/session-status/', views.session_status, name='session_status'),
     path('api/upload-file/', views.upload_file, name='upload_file'),
