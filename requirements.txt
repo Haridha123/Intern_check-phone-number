@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 Django==4.2.7
 selenium==4.15.0
 pandas==1.5.3
+=======
+Django==5.2.5
+selenium==4.15.0
+pandas==2.1.4
+>>>>>>> e9c3cc3632c902921cd9a14e2511d923284cdd25
 openpyxl==3.1.2
 gunicorn==21.2.0
 whitenoise==6.11.0
