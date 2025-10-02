@@ -150,10 +150,52 @@ class SmartWhatsAppChecker:
         return final_result
 
 # Usage example
-def check_number_smart(number: str) -> Dict[str, Any]:
+def check_number_smart(number: str) -> dict:
     """Main function to check WhatsApp number without QR scanning"""
-    checker = SmartWhatsAppChecker()
-    return checker.comprehensive_check(number)
+    try:
+        checker = SmartWhatsAppChecker()
+        result = checker.comprehensive_check(number)
+        
+        # Ensure all values are serializable
+        clean_result = {
+            'number': str(result.get('number', '')),
+            'cleaned_number': str(result.get('cleaned_number', '')),
+            'country': str(result.get('country', 'Unknown')),
+            'valid_format': bool(result.get('valid_format', False)),
+            'is_mobile': bool(result.get('is_mobile', True)),
+            'carrier': str(result.get('carrier', 'Unknown')),
+            'likely_whatsapp_registered': bool(result.get('likely_whatsapp_registered', False)),
+            'confidence_score': int(result.get('confidence_score', 0)),
+            'analysis': {
+                'format_valid': bool(result.get('analysis', {}).get('format_valid', False)),
+                'mobile_number': bool(result.get('analysis', {}).get('mobile_number', True)),
+                'pattern_analysis': str(result.get('analysis', {}).get('pattern_analysis', 'Unknown'))
+            },
+            'verdict': str(result.get('verdict', 'UNKNOWN')),
+            'status': str(result.get('status', 'unknown'))
+        }
+        
+        return clean_result
+        
+    except Exception as e:
+        # Return safe error response
+        return {
+            'number': str(number),
+            'cleaned_number': str(number),
+            'country': 'Unknown',
+            'valid_format': False,
+            'is_mobile': True,
+            'carrier': 'Unknown',
+            'likely_whatsapp_registered': False,
+            'confidence_score': 0,
+            'analysis': {
+                'format_valid': False,
+                'mobile_number': True,
+                'pattern_analysis': 'Error'
+            },
+            'verdict': f'ERROR: {str(e)}',
+            'status': 'error'
+        }
 
 # Test function
 if __name__ == "__main__":
