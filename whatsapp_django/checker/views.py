@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
+﻿from django.shortcuts import render
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
@@ -8,76 +8,174 @@ import time
 from datetime import datetime
 import csv
 import io
-import os
-import pandas as pd
-import openpyxl
-from openpyxl.styles import PatternFill, Font
-from .smart_checker import check_number_smart
 
 # Global variables for batch processing
 checking_status = {
     'running': False,
     'progress': 0,
     'total': 0,
-    'results': [],
-    'result_file': None,
-    'session_id': None
+    'results': []
 }
+
+def check_whatsapp_registration_compose_url(number):
+    '''
+    Check if a phone number is registered on WhatsApp using compose URL method
+    This method works for ANY number, not just non-contacts
+    '''
+    print(f' Checking WhatsApp registration for: {number}')
+    
+    try:
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support.ui import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as EC
+        import re
+        import os
+        
+        # Clean and format the number
+        clean_number = re.sub(r'[^\d+]', '', number)
+        if clean_number.startswith('+'):
+            clean_number = clean_number[1:]  # Remove + for URL
+        
+        print(f' Cleaned number: {clean_number}')
+        
+        # Chrome profile path
+        profile_path = r'C:\num\chrome_profile'
+        
+        # Chrome options
+        chrome_options = Options()
+        chrome_options.add_argument(f'--user-data-dir={profile_path}')
+        chrome_options.add_argument('--profile-directory=Default')
+        chrome_options.add_argument('--disable-notifications')
+        chrome_options.add_argument('--disable-popup-blocking')
+        chrome_options.add_argument('--disable-infobars')
+        chrome_options.add_argument('--no-first-run')
+        chrome_options.add_argument('--no-default-browser-check')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--disable-images')
+        chrome_options.add_argument('--disable-plugins')
+        chrome_options.add_argument('--disable-extensions')
+        
+        driver = webdriver.Chrome(options=chrome_options)
+        driver.maximize_window()
+        
+        # Go to WhatsApp Web compose URL
+        compose_url = f'https://web.whatsapp.com/send?phone={clean_number}'
+        print(f' Opening compose URL: {compose_url}')
+        
+        driver.get(compose_url)
+        time.sleep(1)
+        
+        # Wait for page to load completely
+        wait = WebDriverWait(driver, 5)
+        
+        print(' Waiting for WhatsApp Web to load...')
+        
+        # Check for various indicators
+        try:
+            # Method 1: Look for error message about number not on WhatsApp
+            error_selectors = [
+                '[data-testid=\"alert-phone-number-not-on-whatsapp\"]',
+                '[data-testid=\"invalid-phone-number\"]',
+                'div[data-animate-alert-toast=\"true\"]',
+                'div[role=\"alert\"]'
+            ]
+            
+            for selector in error_selectors:
+                try:
+                    error_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+                    error_text = error_element.text.lower()
+                    print(f' Error found: {error_text}')
+                    
+                    if any(phrase in error_text for phrase in ['not on whatsapp', 'invalid', 'not found']):
+                        print(' Number NOT registered on WhatsApp')
+                        return False
+                        
+                except Exception:
+                    continue
+            
+            # Method 2: Check if we reach the chat interface
+            chat_selectors = [
+                '[data-testid=\"conversation-compose-box-input\"]',
+                'div[contenteditable=\"true\"][data-tab=\"10\"]',
+                '[data-testid=\"msg-container\"]',
+                'footer[data-testid=\"compose\"]'
+            ]
+            
+            for selector in chat_selectors:
+                try:
+                    chat_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+                    print(f' Chat interface found: {selector}')
+                    print(' Number IS registered on WhatsApp')
+                    return True
+                except Exception:
+                    continue
+            
+            # Method 3: Check URL for success/failure patterns
+            time.sleep(3)
+            current_url = driver.current_url
+            print(f' Current URL: {current_url}')
+            
+            if 'send?phone=' in current_url and clean_number in current_url:
+                # Still on compose URL might mean success
+                print(' Still on compose URL - likely registered')
+                return True
+            
+            print(' Unable to determine registration status clearly')
+            return False
+            
+        except Exception as e:
+            print(f' Error during checking: {str(e)}')
+            return False
+            
+    except Exception as e:
+        print(f' WebDriver error: {str(e)}')
+        return False
+        
+    finally:
+        try:
+            driver.quit()
+            print(' Browser closed')
+        except:
+            pass
+
+def home(request):
+    return render(request, 'index.html')
 
 @csrf_exempt
 @require_http_methods(['POST'])
-def check_single_smart(request):
-    """Smart check without QR scanning - Pattern-based analysis"""
-    try:
-        data = json.loads(request.body)
-        number = data.get('number', '')
-        
-        if not number:
-            return JsonResponse({'error': 'No number provided'}, status=400)
-        
-        print("=" * 80)
-        print(f" SMART CHECK (NO QR REQUIRED)")
-        print(f" Number: {number}")
-        print("=" * 80)
-        
-        # Use smart checker
-        result = check_number_smart(number)
-        
-        response_data = {
-            'number': number,
-            'registered': result['status'] == 'registered',
-            'message': result['verdict'],
-            'confidence': result['confidence_score'],
-            'analysis': result['analysis'],
-            'country': result['country'],
-            'is_mobile': result['is_mobile'],
-            'carrier': result['carrier'],
-            'status': 'success',
-            'mode': 'smart_analysis',
-            'session_info': 'Smart pattern-based checking - No QR scan required!'
-        }
-        
-        print("=" * 80)
-        print(f" SMART RESULT: {number} -> {result['verdict']} ({result['confidence_score']}% confidence)")
-        print("=" * 80)
-        
-        return JsonResponse(response_data)
-        
-    except Exception as e:
-        print(f' Smart Check Error: {e}')
-        return JsonResponse({'error': str(e)}, status=500)
+def initialize_session(request):
+    return JsonResponse({'success': True, 'message': 'Django session ready'})
 
 @csrf_exempt
 @require_http_methods(['POST'])
 def check_single(request):
-    """Fallback to smart check for now"""
-    return check_single_smart(request)
+    try:
+        data = json.loads(request.body)
+        number = data.get('number', '').strip()
+        
+        if not number:
+            return JsonResponse({'error': 'No number provided'}, status=400)
+        
+        print(f'[DJANGO DEBUG] Checking {number}...')
+        result = check_whatsapp_registration_compose_url(number)
+        
+        return JsonResponse({
+            'number': number,
+            'registered': result,
+            'message': 'REGISTERED on WhatsApp' if result else 'NOT REGISTERED on WhatsApp',
+            'timestamp': datetime.now().strftime('%H:%M:%S')
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
 @require_http_methods(['POST'])
-def check_batch_smart(request):
-    """Smart batch check without QR scanning"""
+def check_batch(request):
     global checking_status
+    
     try:
         data = json.loads(request.body)
         numbers = data.get('numbers', [])
@@ -85,210 +183,45 @@ def check_batch_smart(request):
         if not numbers:
             return JsonResponse({'error': 'No numbers provided'}, status=400)
         
-        session_id = datetime.now().strftime('%Y%m%d_%H%M%S')
+        checking_status = {'running': True, 'progress': 0, 'total': len(numbers), 'results': []}
         
-        checking_status = {
-            'running': True,
-            'progress': 0,
-            'total': len(numbers),
-            'results': [],
-            'result_file': None,
-            'session_id': session_id,
-            'mode': 'smart'
-        }
-        
-        def smart_batch_process():
+        def batch_process():
             global checking_status
-            print("=" * 80)
-            print(f" SMART BATCH CHECK (NO QR REQUIRED)")
-            print(f" Total: {len(numbers)} numbers")
-            print("=" * 80)
-            
+            print(f'[BATCH] Starting batch of {len(numbers)} numbers')
             for i, number in enumerate(numbers):
                 try:
-                    print(f" Processing {i+1}/{len(numbers)}: {number}")
-                    smart_result = check_number_smart(number.strip())
-                    
+                    result = check_whatsapp_registration_compose_url(number.strip())
                     checking_status['results'].append({
                         'number': number,
-                        'registered': smart_result['status'] == 'registered',
-                        'confidence': smart_result['confidence_score'],
-                        'analysis': smart_result['analysis'],
-                        'country': smart_result['country'],
-                        'message': smart_result['verdict']
+                        'registered': result,
+                        'message': 'REGISTERED on WhatsApp' if result else 'NOT REGISTERED on WhatsApp'
                     })
                     checking_status['progress'] = i + 1
-                    
-                    print(f" Smart Result: {number} -> {smart_result['verdict']} ({smart_result['confidence_score']}%)")
-                    
-                    time.sleep(0.5)  # Fast processing
-                    
+                    time.sleep(3)
                 except Exception as e:
-                    print(f' Error processing {number}: {e}')
                     checking_status['results'].append({
                         'number': number,
                         'error': str(e)
                     })
-                    checking_status['progress'] = i + 1
-            
-            try:
-                file_info = create_smart_result_files(checking_status['results'], session_id)
-                if file_info:
-                    checking_status['result_file'] = file_info
-                    print(f" [FILES] Smart analysis files created!")
-            except Exception as e:
-                print(f' File creation error: {e}')
-            
             checking_status['running'] = False
-            print(" SMART BATCH CHECK COMPLETED!")
         
-        thread = threading.Thread(target=smart_batch_process)
+        thread = threading.Thread(target=batch_process)
         thread.daemon = True
         thread.start()
         
-        return JsonResponse({
-            'message': 'Smart Analysis: No QR scan required - Pattern-based checking started!',
-            'total': len(numbers),
-            'session_id': session_id,
-            'mode': 'smart',
-            'status': 'success'
-        })
-        
+        return JsonResponse({'message': 'Batch checking started', 'total': len(numbers)})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
-@csrf_exempt
-@require_http_methods(['POST'])
-def check_batch(request):
-    """Fallback to smart batch check"""
-    return check_batch_smart(request)
-
-def create_smart_result_files(results, session_id):
-    """Create smart analysis result files"""
-    try:
-        results_dir = os.path.join('media', 'results')
-        os.makedirs(results_dir, exist_ok=True)
-        
-        print(f" [FILES] Creating smart analysis result files...")
-        
-        data = []
-        for result in results:
-            if 'error' in result:
-                data.append({
-                    'Phone Number': result['number'],
-                    'Status': 'ERROR',
-                    'WhatsApp Status': 'Error',
-                    'Confidence': 'N/A',
-                    'Country': 'N/A',
-                    'Analysis': 'Error occurred',
-                    'Message': result['error'],
-                    'Checked At': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                })
-            else:
-                status = 'LIKELY REGISTERED' if result['registered'] else 'LIKELY NOT REGISTERED'
-                data.append({
-                    'Phone Number': result['number'],
-                    'Status': status,
-                    'WhatsApp Status': 'Probable' if result['registered'] else 'Unlikely',
-                    'Confidence': f"{result.get('confidence', 0)}%",
-                    'Country': result.get('country', 'Unknown'),
-                    'Analysis': str(result.get('analysis', {})),
-                    'Message': result.get('message', ''),
-                    'Checked At': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                })
-        
-        df = pd.DataFrame(data)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        # CSV file
-        csv_filename = f'whatsapp_smart_analysis_{session_id}_{timestamp}.csv'
-        csv_path = os.path.join(results_dir, csv_filename)
-        df.to_csv(csv_path, index=False)
-        
-        # Excel file with enhanced formatting
-        excel_filename = f'whatsapp_smart_analysis_{session_id}_{timestamp}.xlsx'
-        excel_path = os.path.join(results_dir, excel_filename)
-        
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Smart WhatsApp Analysis"
-        
-        # Headers
-        headers = ['Phone Number', 'Status', 'WhatsApp Status', 'Confidence', 'Country', 'Analysis', 'Message', 'Checked At']
-        for col_num, header in enumerate(headers, 1):
-            cell = ws.cell(row=1, column=col_num)
-            cell.value = header
-            cell.font = Font(bold=True)
-            cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-        
-        # Data with smart coloring
-        for row_num, row_data in enumerate(data, 2):
-            ws.cell(row=row_num, column=1, value=row_data['Phone Number'])
-            
-            status_cell = ws.cell(row=row_num, column=2, value=row_data['Status'])
-            if 'LIKELY REGISTERED' in row_data['Status']:
-                status_cell.fill = PatternFill(start_color="70AD47", end_color="70AD47", fill_type="solid")
-            elif 'LIKELY NOT REGISTERED' in row_data['Status']:
-                status_cell.fill = PatternFill(start_color="E15759", end_color="E15759", fill_type="solid")
-            else:
-                status_cell.fill = PatternFill(start_color="FFC000", end_color="FFC000", fill_type="solid")
-            
-            ws.cell(row=row_num, column=3, value=row_data['WhatsApp Status'])
-            ws.cell(row=row_num, column=4, value=row_data['Confidence'])
-            ws.cell(row=row_num, column=5, value=row_data['Country'])
-            ws.cell(row=row_num, column=6, value=row_data['Analysis'])
-            ws.cell(row=row_num, column=7, value=row_data['Message'])
-            ws.cell(row=row_num, column=8, value=row_data['Checked At'])
-        
-        # Auto-adjust columns
-        for column in ws.columns:
-            max_length = 0
-            column_letter = column[0].column_letter
-            for cell in column:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except:
-                    pass
-            adjusted_width = min(max_length + 2, 50)
-            ws.column_dimensions[column_letter].width = adjusted_width
-        
-        wb.save(excel_path)
-        
-        return {
-            'csv_file': csv_filename,
-            'csv_path': csv_path,
-            'excel_file': excel_filename,
-            'excel_path': excel_path
-        }
-        
-    except Exception as e:
-        print(f' [FILES] Error: {e}')
-        return None
 
 def get_status(request):
     return JsonResponse(checking_status)
 
-@csrf_exempt
-def download_results(request, filename):
-    try:
-        file_path = os.path.join('media', 'results', filename)
-        
-        if not os.path.exists(file_path):
-            return JsonResponse({'error': 'File not found'}, status=404)
-        
-        if filename.endswith('.xlsx'):
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        else:
-            content_type = 'text/csv'
-        
-        with open(file_path, 'rb') as f:
-            response = HttpResponse(f.read(), content_type=content_type)
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            return response
-            
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+def session_status(request):
+    return JsonResponse({
+        'initialized': True,
+        'driver_active': True
+    })
+
 
 @csrf_exempt
 @require_http_methods(['POST'])
@@ -298,55 +231,62 @@ def upload_file(request):
             return JsonResponse({'error': 'No file uploaded'}, status=400)
         
         uploaded_file = request.FILES['file']
-        if uploaded_file.size > 5 * 1024 * 1024:
+        
+        if uploaded_file.size > 5 * 1024 * 1024:  # 5MB limit
             return JsonResponse({'error': 'File too large (max 5MB)'}, status=400)
         
         numbers = []
         file_name = uploaded_file.name.lower()
         
-        if file_name.endswith('.txt'):
-            content = uploaded_file.read().decode('utf-8')
-            numbers = [line.strip() for line in content.split('\n') if line.strip()]
-        elif file_name.endswith('.csv'):
-            content = uploaded_file.read().decode('utf-8')
-            csv_reader = csv.reader(io.StringIO(content))
-            numbers = [row[0].strip() for row in csv_reader if row and row[0].strip()]
-        else:
-            return JsonResponse({'error': 'Unsupported file format'}, status=400)
-        
-        clean_numbers = [str(num).strip() for num in numbers if str(num).strip() and len(str(num).strip()) >= 10]
-        
-        if not clean_numbers:
-            return JsonResponse({'error': 'No valid phone numbers found'}, status=400)
-        
-        return JsonResponse({
-            'success': True,
-            'numbers': clean_numbers,
-            'count': len(clean_numbers),
-            'message': f'Loaded {len(clean_numbers)} numbers for smart analysis'
-        })
-        
+        try:
+            if file_name.endswith('.txt'):
+                # Process text file
+                content = uploaded_file.read().decode('utf-8')
+                numbers = [line.strip() for line in content.split('\n') if line.strip()]
+                
+            elif file_name.endswith('.csv'):
+                # Process CSV file
+                content = uploaded_file.read().decode('utf-8')
+                csv_reader = csv.reader(io.StringIO(content))
+                
+                for row in csv_reader:
+                    if row and row[0].strip():
+                        numbers.append(row[0].strip())
+                        
+            else:
+                return JsonResponse({'error': 'Unsupported file format. Use .txt or .csv'}, status=400)
+            
+            # Clean and validate numbers
+            clean_numbers = []
+            for num in numbers:
+                clean_num = str(num).strip()
+                if clean_num and len(clean_num) >= 10:
+                    clean_numbers.append(clean_num)
+            
+            if not clean_numbers:
+                return JsonResponse({'error': 'No valid phone numbers found in file'}, status=400)
+            
+            return JsonResponse({
+                'success': True,
+                'numbers': clean_numbers,
+                'count': len(clean_numbers),
+                'message': f'Successfully loaded {len(clean_numbers)} phone numbers'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': f'Error processing file: {str(e)}'}, status=500)
+            
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-def session_status(request):
-    return JsonResponse({
-        'initialized': True,
-        'driver_active': True,
-        'logged_in': True,
-        'session_type': 'SMART_MODE_NO_QR_REQUIRED'
-    })
 
-def index(request):
-    return render(request, 'index.html')
 
 def test_page(request):
     return render(request, 'test.html')
 
 def test_api(request):
     return JsonResponse({
-        'status': 'Smart Mode Active - No QR scan needed!',
+        'status': 'Django API is working!',
         'method': request.method,
-        'timestamp': datetime.now().strftime('%H:%M:%S'),
-        'mode': 'smart_analysis'
+        'timestamp': datetime.now().strftime('%H:%M:%S')
     })

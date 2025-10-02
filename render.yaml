@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: whatsapp-checker
+    name: intern-check-phone-number
     runtime: python3
     buildCommand: "chmod +x build.sh && ./build.sh"
     startCommand: "cd whatsapp_django && gunicorn whatsapp_django.wsgi:application --bind 0.0.0.0:$PORT"
@@ -11,8 +11,8 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
-        value: False
+        value: "False"
       - key: RENDER
-        value: True
+        value: "True"
       - key: WEB_CONCURRENCY
         value: 1
