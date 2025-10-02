@@ -77,10 +77,10 @@ def check_whatsapp_registration_compose_url(number):
         try:
             # Method 1: Look for error message about number not on WhatsApp
             error_selectors = [
-                '[data-testid=\"alert-phone-number-not-on-whatsapp\"]',
-                '[data-testid=\"invalid-phone-number\"]',
-                'div[data-animate-alert-toast=\"true\"]',
-                'div[role=\"alert\"]'
+                '[data-testid="alert-phone-number-not-on-whatsapp"]',
+                '[data-testid="invalid-phone-number"]',
+                'div[data-animate-alert-toast="true"]',
+                'div[role="alert"]'
             ]
             
             for selector in error_selectors:
@@ -98,10 +98,10 @@ def check_whatsapp_registration_compose_url(number):
             
             # Method 2: Check if we reach the chat interface
             chat_selectors = [
-                '[data-testid=\"conversation-compose-box-input\"]',
-                'div[contenteditable=\"true\"][data-tab=\"10\"]',
-                '[data-testid=\"msg-container\"]',
-                'footer[data-testid=\"compose\"]'
+                '[data-testid="conversation-compose-box-input"]',
+                'div[contenteditable="true"][data-tab="10"]',
+                '[data-testid="msg-container"]',
+                'footer[data-testid="compose"]'
             ]
             
             for selector in chat_selectors:
@@ -140,6 +140,9 @@ def check_whatsapp_registration_compose_url(number):
             print(' Browser closed')
         except:
             pass
+
+def index(request):
+    return render(request, 'index.html')
 
 def home(request):
     return render(request, 'index.html')
@@ -222,7 +225,6 @@ def session_status(request):
         'driver_active': True
     })
 
-
 @csrf_exempt
 @require_http_methods(['POST'])
 def upload_file(request):
@@ -279,8 +281,6 @@ def upload_file(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-
-
 def test_page(request):
     return render(request, 'test.html')
 
@@ -290,3 +290,38 @@ def test_api(request):
         'method': request.method,
         'timestamp': datetime.now().strftime('%H:%M:%S')
     })
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def check_single_smart(request):
+    """Smart mode disabled - fallback to real WhatsApp checking"""
+    return check_single(request)
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def check_batch_smart(request):
+    """Smart mode disabled - fallback to real WhatsApp checking"""
+    return check_batch(request)
+
+def download_results(request, filename):
+    """Download results file"""
+    try:
+        import os
+        from django.http import HttpResponse, Http404
+        
+        # Define the results directory
+        results_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'results')
+        file_path = os.path.join(results_dir, filename)
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            raise Http404("File not found")
+        
+        # Read and return the file
+        with open(file_path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+            
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
