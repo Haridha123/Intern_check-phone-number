@@ -1,18 +1,10 @@
 services:
   - type: web
-    name: intern-check-phone-number
-    runtime: python3
-    buildCommand: "chmod +x build.sh && ./build.sh"
-    startCommand: "cd whatsapp_django && gunicorn whatsapp_django.wsgi:application --bind 0.0.0.0:$PORT"
-    plan: free
+    name: django-docker-app
+    runtime: docker
+    plan: starter
+    autoDeploy: true
+    dockerfilePath: ./Dockerfile
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
-      - key: SECRET_KEY
-        generateValue: true
-      - key: DEBUG
-        value: "False"
-      - key: RENDER
-        value: "True"
-      - key: WEB_CONCURRENCY
+      - key: PYTHONUNBUFFERED
         value: 1
